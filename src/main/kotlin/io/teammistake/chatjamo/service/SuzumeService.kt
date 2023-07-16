@@ -17,7 +17,7 @@ class SuzumeService {
     @Autowired
     lateinit var webClientBuilder: WebClient.Builder;
 
-    @Value("#{environments.SUZUME_URL}")
+    @Value("#{environment.SUZUME_URL}")
     lateinit var suzume: String;
 
     fun generateResponse(apiInferenceRequest: APIInferenceRequest): Flow<SuzumeStreamingResponse> {

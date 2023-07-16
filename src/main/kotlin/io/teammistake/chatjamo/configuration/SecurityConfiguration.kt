@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.oauth2.client.registration.ClientRegistration
+import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.web.server.SecurityWebFilterChain
 import reactor.core.publisher.Mono
@@ -30,6 +31,7 @@ class SecurityConfiguration {
         val clientRegistration: ClientRegistration = ClientRegistration
             .withRegistrationId("dex")
             .clientId(clientId)
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
             .clientSecret(clientSecret)
             .issuerUri(dex).build();
         return http
