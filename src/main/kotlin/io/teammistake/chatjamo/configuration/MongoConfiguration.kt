@@ -1,4 +1,4 @@
-package io.teammistake.suzume.configuration
+package io.teammistake.chatjamo.configuration
 
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoClients

@@ -1,8 +1,6 @@
-package io.teammistake.suzume.data
+package io.teammistake.chatjamo.dto
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 

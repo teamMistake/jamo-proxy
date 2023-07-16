@@ -1,17 +1,18 @@
 package io.teammistake.chatjamo.service
 
-import io.teammistake.suzume.data.APIInferenceRequest
-import io.teammistake.suzume.data.SuzumeStreamingResponse
+import io.teammistake.chatjamo.dto.APIInferenceRequest
+import io.teammistake.chatjamo.dto.SuzumeStreamingResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
+import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToFlow
 import org.springframework.web.reactive.function.client.exchangeToFlow
 
+@Service
 class SuzumeService {
     @Autowired
     lateinit var webClientBuilder: WebClient.Builder;

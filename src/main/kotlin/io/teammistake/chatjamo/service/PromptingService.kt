@@ -4,7 +4,7 @@ import io.teammistake.chatjamo.database.Chat
 import io.teammistake.chatjamo.database.ChatMessage
 import io.teammistake.chatjamo.database.ChatRepository
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
-import io.teammistake.suzume.exception.NotFoundException
+import io.teammistake.chatjamo.exceptions.NotFoundException
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Autowired

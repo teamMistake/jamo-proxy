@@ -1,4 +1,4 @@
-package io.teammistake.suzume.exception
+package io.teammistake.chatjamo.exceptions
 
 import java.lang.RuntimeException
 

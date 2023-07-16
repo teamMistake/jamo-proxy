@@ -1,9 +1,6 @@
-package io.teammistake.suzume.data
+package io.teammistake.chatjamo.dto
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
 open class SuzumeStreamingResponse;

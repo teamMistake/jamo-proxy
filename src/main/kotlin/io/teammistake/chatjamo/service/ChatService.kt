@@ -3,7 +3,7 @@ package io.teammistake.chatjamo.service
 import io.teammistake.chatjamo.database.Chat
 import io.teammistake.chatjamo.database.ChatRepository
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
-import io.teammistake.suzume.exception.NotFoundException
+import io.teammistake.chatjamo.exceptions.NotFoundException
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.ReactorContext
