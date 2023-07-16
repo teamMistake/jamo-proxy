@@ -10,20 +10,30 @@ class Chat(
     var chatId: String,
     var userId: String?,
     var shared: Boolean,
-    var history: List<ChatHistoryPart>,
+    var messages: MutableList<ChatMessage>,
     var title: String = "",
-    var creationTimestamp: Instant
+    var creationTimestamp: Instant,
+    var generating: Boolean = false
 )
 
-class ChatHistoryPart(
+class ChatMessage(
+    var messageId: String?, // null if it does not belong to current chat
     var req: String,
-    var resp: List<ChatHistoryResponse>
+    var resp: MutableList<ChatMessageResponse>,
+    var experiment: Experiment
 );
 
-class ChatHistoryResponse(
-    var reqId: String,
+class ChatMessageResponse(
+    var reqId: String?, // null if it does not belong to current chat
     var text: String,
     var model: String,
-    var hyperParameter: Map<String, String>,
-    var selected: Boolean
+    var hyperParameter: MutableMap<String, String>,
+    var selected: Boolean,
+    var feedback: Int?,
+    var type: ResponseType
 )
+
+open class Experiment()
+enum class ResponseType {
+    PLAIN, REGENERATED
+}

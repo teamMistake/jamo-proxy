@@ -6,13 +6,15 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 
+open class SuzumeStreamingResponse;
+
 @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy::class)
-data class InferenceResponse(
+class InferenceResponse(
     val respPartial: String?,
     val respFull: String?,
     val eos: Boolean,
     val error: String? = null
-)
+): SuzumeStreamingResponse();
 
 @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class APIResponse(
@@ -22,7 +24,7 @@ data class APIResponse(
 )
 
 @JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy::class)
-data class APIResponseHeader(
+class APIResponseHeader(
     val reqId: String,
     val model: String
-)
+): SuzumeStreamingResponse();
