@@ -1,0 +1,21 @@
+
+spring:
+  application:
+    name: jamo-proxy
+
+info:
+  application:
+    name: jamo-proxy
+
+management:
+  info:
+    env:
+      enabled: false
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+        exclude: "env"

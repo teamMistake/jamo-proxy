@@ -5,4 +5,4 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
-rootProject.name = "jamoproxy"
+rootProject.name = "jamo-proxy"
