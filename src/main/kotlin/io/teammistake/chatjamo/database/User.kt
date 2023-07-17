@@ -5,9 +5,9 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document("user")
 class User(
     val userId: String,
-    val name: String,
-    val sentMessages: Long,
-    val receivedMessages: Long,
-    val banned: Boolean,
-    val bannedReason: String
+    var name: String,
+    var sentMessages: Long,
+    var receivedMessages: Long,
+    var banned: Boolean = false,
+    var bannedReason: String? = null
 )

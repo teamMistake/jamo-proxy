@@ -12,7 +12,7 @@ class ProxyAuthenticationConverter: ServerAuthenticationConverter {
     override fun convert(exchange: ServerWebExchange?): Mono<Authentication> {
         return mono {
             val user = exchange?.request?.headers?.getFirst("X-Forwarded-User") ?: return@mono null;
-            val username = exchange.request.headers.getFirst("X-Forwarded-Preferred-Username");
+            val username = exchange.request.headers.getFirst("X-Forwarded-Preferred-Username") ?: throw IllegalArgumentException("preferred username null");
             val email = exchange.request.headers.getFirst("X-Forwarded-Email")
 
 
