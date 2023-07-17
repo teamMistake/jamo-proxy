@@ -7,6 +7,8 @@ import io.teammistake.chatjamo.exceptions.NotFoundException
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -32,7 +34,7 @@ class ExceptionHandler {
 
 
 
-    @ExceptionHandler(PermissionDeniedException::class)
+    @ExceptionHandler(PermissionDeniedException::class, BadCredentialsException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun onWeirdResponse(e: PermissionDeniedException): JamoAPIError {
         e.printStackTrace()
@@ -42,4 +44,8 @@ class ExceptionHandler {
     @ExceptionHandler(NotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun onWeirdResponse(e: NotFoundException) {}
+
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException::class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    fun onAuthNotFound(e: AuthenticationCredentialsNotFoundException) {}
 }

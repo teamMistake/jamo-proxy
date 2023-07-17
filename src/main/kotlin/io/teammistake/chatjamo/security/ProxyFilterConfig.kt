@@ -25,9 +25,7 @@ class ProxyFilterConfig {
         filter.setServerAuthenticationConverter(proxyAuthenticationConverter)
         filter.setAuthenticationSuccessHandler(WebFilterChainServerAuthenticationSuccessHandler())
         filter.setAuthenticationFailureHandler { exchange: WebFilterExchange?, exception: AuthenticationException? ->
-            Mono.error(
-                BadCredentialsException("Invalid authentication token")
-            )
+            Mono.error(exception ?: BadCredentialsException("?"))
         }
         return filter
     }
