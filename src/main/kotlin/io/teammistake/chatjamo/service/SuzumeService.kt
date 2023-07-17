@@ -23,12 +23,18 @@ class SuzumeService {
     @Value("#{environment.SUZUME_URL}")
     lateinit var suzume: String;
 
-    fun generateResponse(apiInferenceRequest: APIInferenceRequest): Flow<SuzumeStreamingResponse> {
+    suspend fun generateResponse(apiInferenceRequest: APIInferenceRequest): Flow<SuzumeStreamingResponse> {
+
+        val uid =  getUser()?.getUserId()
         return webClientBuilder
             .baseUrl(suzume)
             .build()
             .post()
             .uri("/generate")
+            .headers {
+                if (uid != null)
+                    it.set("User-ID", uid)
+            }
             .accept(MediaType.APPLICATION_NDJSON)
             .bodyValue(apiInferenceRequest)
             .exchangeToFlow {

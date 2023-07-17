@@ -26,12 +26,12 @@ class LeaderboardService {
 
     data class Position(
         var username: String?,
-        val rank: Long, // is 0 indexed
+        val rank: Long?, // is 0 indexed
         val score: Double
     )
     suspend fun getPosition(userId: String): Position {
-        val rank = redisSsetOps.reverseRank("leaderboard_1", userId).awaitSingle();
-        val score = redisSsetOps.score("leaderboard_1", userId).awaitSingle();
+        val rank = redisSsetOps.reverseRank("leaderboard_1", userId).awaitSingleOrNull();
+        val score = redisSsetOps.score("leaderboard_1", userId).awaitSingleOrNull() ?: 0.0
         val user = userRepository.findById(userId).awaitSingleOrNull();
 
         return Position(user?.name, rank, score);

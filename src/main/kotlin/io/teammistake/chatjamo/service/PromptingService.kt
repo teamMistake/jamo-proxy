@@ -29,7 +29,7 @@ class PromptingService {
 
     class SuzumeDone(val cause: Exception?): SuzumeStreamingResponse();
 
-    suspend fun log(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest, resp: Flow<SuzumeStreamingResponse>, type: ResponseType) {
+    suspend fun log(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest, resp: Flow<SuzumeStreamingResponse>, type: ResponseType, uid: String?) {
             var state = true;
             var last: String = "";
             val job = CoroutineScope(SupervisorJob()).async {
@@ -106,17 +106,28 @@ class PromptingService {
 
             message.resp.add(respEntity)
             chatRepository.save(chat).awaitSingle()
+
+        if (uid != null) {
+            userService.incrementReceivedMessages(uid, respEntity.text.length)
+            leaderboardService.addScore(uid, respEntity.text.length.toDouble())
+        }
     }
 
+    @Autowired
+    lateinit var leaderboardService: LeaderboardService
+    @Autowired
+    lateinit var userService: UserService
+
     @OptIn(DelicateCoroutinesApi::class)
-    suspend fun requestSuzume(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest, responseType: ResponseType): Pair<APIResponseHeader, Flow<InferenceResponse>>  {
+    suspend fun requestSuzume(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest, responseType: ResponseType, uid: String?): Pair<APIResponseHeader, Flow<InferenceResponse>>  {
         val coroutineScope = CoroutineScope(Dispatchers.IO)
+
         val resp = suzumeService.generateResponse(apiInferenceRequest)
                 .onCompletion { cause -> if (cause == null) emit(SuzumeDone(null))}
                 .shareIn(coroutineScope, SharingStarted.Lazily, 10)
 
         GlobalScope.launch {
-           log(chatId, messageId, apiInferenceRequest, resp, responseType)
+           log(chatId, messageId, apiInferenceRequest, resp, responseType, uid)
         }
 
 
@@ -150,6 +161,12 @@ class PromptingService {
         if (chat.messages.size > 5 && chat.userId == null) throw PermissionDeniedException("Can only send 5 messages to unbound chat")
         chat.generating = true
         chat = chatRepository.save(chat).awaitSingle()
+
+        val uid = getUser()?.getUserId()
+        if (uid != null) {
+            leaderboardService.addScore(uid, prompt.length.toDouble())
+            userService.incrementSentMessages(uid, prompt.length)
+        }
         try {
             chat = chosenReqId?.let { chooseResponse(chatId, chat.messages.last().messageId ?: "", it) } ?: chat
 
@@ -162,7 +179,7 @@ class PromptingService {
             val jobs: MutableList<Deferred<Pair<APIResponseHeader, Flow<MessageEvent>>>> = mutableListOf();
 
             run {
-                val apiCallScope = CoroutineScope(SupervisorJob());
+                val apiCallScope = CoroutineScope(coroutineContext + SupervisorJob());
                 val job = apiCallScope.async {
                     val req = APIInferenceRequest(
                         prompt,
@@ -170,7 +187,7 @@ class PromptingService {
                         maxToken = 512,
                         stream = true,
                         model = "prod_a",) // TODO: hardcoded
-                    val (header, resp) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN);
+                    val (header, resp) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN, uid);
 
                     return@async Pair(header, resp.map {
                         MessageEvent(
@@ -229,8 +246,8 @@ class PromptingService {
                 model = "prod_a", // TODO: hardcoded
             )
 
-            val request = CoroutineScope(SupervisorJob()).
-                async { requestSuzume(chatId, message.messageId !!, req, ResponseType.REGENERATED) }
+            val request = CoroutineScope(coroutineContext + SupervisorJob()).
+                async { requestSuzume(chatId, message.messageId !!, req, ResponseType.REGENERATED, getUser()?.getUserId()) }
 
 
             try {
