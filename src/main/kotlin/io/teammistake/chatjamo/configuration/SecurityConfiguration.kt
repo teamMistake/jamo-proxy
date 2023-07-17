@@ -4,11 +4,11 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
-import org.springframework.security.oauth2.client.registration.ClientRegistration
-import org.springframework.security.oauth2.core.AuthorizationGrantType
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod
 import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.security.web.server.authentication.AuthenticationWebFilter
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository
 import reactor.core.publisher.Mono
 
 
@@ -16,30 +16,14 @@ import reactor.core.publisher.Mono
 @Configuration
 class SecurityConfiguration {
 
-    @Value("#{environment.DEX_HOST}")
-    lateinit var dex: String;
-
-    @Value("#{environment.CLIENT_ID}")
-    lateinit var clientId: String;
-
-    @Value("#{environment.CLIENT_SECRET}")
-    lateinit var clientSecret: String;
-
     @Bean
-    @Throws(Exception::class)
-    fun configure(http: ServerHttpSecurity): SecurityWebFilterChain? {
-        val clientRegistration: ClientRegistration = ClientRegistration
-            .withRegistrationId("dex")
-            .clientId(clientId)
-            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-            .clientSecret(clientSecret)
-            .issuerUri(dex).build();
+    fun configure(http: ServerHttpSecurity, jwtAuthenticationWebFilter: AuthenticationWebFilter): SecurityWebFilterChain? {
         return http
-            .oauth2Login {
-                it.clientRegistrationRepository { name ->
-                    if (name == "dex") Mono.just(clientRegistration)
-                    Mono.empty()
-                }
-            }.build()
+            .addFilterAt(jwtAuthenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+            .csrf {
+                it.disable()
+            }
+            .build()
     }
 }

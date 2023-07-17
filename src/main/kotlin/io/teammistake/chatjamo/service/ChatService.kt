@@ -1,5 +1,6 @@
 package io.teammistake.chatjamo.service
 
+import io.teammistake.chatjamo.security.UserPrincipal
 import io.teammistake.chatjamo.database.Chat
 import io.teammistake.chatjamo.database.ChatRepository
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
@@ -12,35 +13,34 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContext
-import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import java.time.Instant
 import java.util.*
 import kotlin.coroutines.coroutineContext
 
-fun OidcUser.getUserId(): String {
-    return this.issuer.toExternalForm()+"#"+this.userInfo.subject
+fun UserPrincipal.getUserId(): String {
+    return this.user
 }
 
 
-fun Chat.canView(user: OidcUser?): Boolean {
+fun Chat.canView(user: UserPrincipal?): Boolean {
     if (this.shared) return true;
     if (this.userId == null) return true;
     if (this.userId == user?.getUserId()) return true;
     return false;
 }
 
-fun Chat.isOwner(user: OidcUser?): Boolean {
+fun Chat.isOwner(user: UserPrincipal?): Boolean {
     if (this.userId == null) return true;
     if (this.userId == user?.getUserId()) return true;
     return false;
 }
 
-suspend fun getUser(): OidcUser? {
+suspend fun getUser(): UserPrincipal? {
     val ctx = coroutineContext[ReactorContext.Key]?.context?.get<Mono<SecurityContext>>(SecurityContext::class.java)?.asFlow()?.single()
-    val oidcUser = ctx?.authentication?.principal as OidcUser?;
-    return oidcUser;
+    val user = ctx?.authentication?.principal as UserPrincipal?;
+    return user;
 }
 
 @Service
