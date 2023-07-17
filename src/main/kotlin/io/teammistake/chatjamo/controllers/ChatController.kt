@@ -1,7 +1,9 @@
 package io.teammistake.chatjamo.controllers
 
 import io.teammistake.chatjamo.database.Chat
+import io.teammistake.chatjamo.dto.APIError
 import io.teammistake.chatjamo.dto.ChatCreationEvent
+import io.teammistake.chatjamo.dto.JamoAPIError
 import io.teammistake.chatjamo.dto.MessageEvent
 import io.teammistake.chatjamo.service.ChatService
 import io.teammistake.chatjamo.service.PromptingService
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.lang.Exception
 
 @RestController
 @RequestMapping("/chat")
@@ -39,13 +42,10 @@ class ChatController {
 
         return Flux.concat(
             Mono.just(MessageEvent(ChatCreationEvent(chat))),
-            flow {
-                promptingService.sendChatStreaming(chatId = chat.chatId, request.initialPrompt)
-                    .collect {
-                        emit(it)
-                    }
-            }.asFlux()
-        )
+            promptingService.sendChatStreaming(chatId = chat.chatId, request.initialPrompt).asFlux()
+                    .onErrorResume { Mono.just(MessageEvent(JamoAPIError(it.message))) }
+
+        );
     }
 
     data class ShareRequest(

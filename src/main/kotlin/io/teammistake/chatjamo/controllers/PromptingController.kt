@@ -1,6 +1,7 @@
 package io.teammistake.chatjamo.controllers
 
 import io.teammistake.chatjamo.dto.ChatCreationEvent
+import io.teammistake.chatjamo.dto.JamoAPIError
 import io.teammistake.chatjamo.dto.MessageEvent
 import io.teammistake.chatjamo.service.PromptingService
 import kotlinx.coroutines.reactor.asFlux
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.lang.Exception
 
 @RestController
 @RequestMapping("/chat/{chatId}")
@@ -27,14 +29,14 @@ class PromptingController {
     @PostMapping("/message")
     suspend fun createMessage(@PathVariable("chatId") chatId: String,
                               @RequestBody req: MessageCreationRequest): Flux<MessageEvent> {
-
         return promptingService.sendChatStreaming(chatId = chatId, req.message).asFlux()
+                .onErrorResume { Mono.just(MessageEvent(JamoAPIError(it.message))) }
     }
 
     @PostMapping("/regenerate")
     suspend fun regenerateLast(@PathVariable("chatId") chatId: String): Flux<MessageEvent> {
         return promptingService.regenerateChatStreaming(chatId = chatId).asFlux()
-
+                .onErrorResume { Mono.just(MessageEvent(JamoAPIError(it.message))) }
     }
 
 

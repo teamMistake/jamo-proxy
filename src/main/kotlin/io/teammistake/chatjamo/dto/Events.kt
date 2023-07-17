@@ -8,9 +8,10 @@ import io.teammistake.chatjamo.database.ChatMessage
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
     JsonSubTypes.Type(name="lm_response", value=ResponseGenerationEvent::class),
-    JsonSubTypes.Type(name="chat_created", value=ChatCreationEvent::class),
-    JsonSubTypes.Type(name="message_created", value=MessageCreationEvent::class),
-    JsonSubTypes.Type(name="lm_reqids", value=ResponseIdsEvent::class)
+    JsonSubTypes.Type(name="chat", value=ChatCreationEvent::class),
+    JsonSubTypes.Type(name="message", value=MessageCreationEvent::class),
+    JsonSubTypes.Type(name="lm_reqids", value=ResponseIdsEvent::class),
+    JsonSubTypes.Type(name="error", value=JamoAPIError::class)
 )
 open class MessageEventData;
 

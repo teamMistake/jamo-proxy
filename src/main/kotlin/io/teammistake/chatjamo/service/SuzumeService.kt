@@ -3,6 +3,7 @@ package io.teammistake.chatjamo.service
 import io.teammistake.chatjamo.dto.APIInferenceRequest
 import io.teammistake.chatjamo.dto.SuzumeStreamingResponse
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,6 +34,7 @@ class SuzumeService {
             .exchangeToFlow {
                 it.bodyToFlow(SuzumeStreamingResponse::class)
             }
+            .onEach { println(it) }
             .timeout(1.minutes)
     }
 
