@@ -6,6 +6,7 @@ import io.teammistake.chatjamo.database.ChatRepository
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
 import io.teammistake.chatjamo.exceptions.NotFoundException
 import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.ReactorContext
 import kotlinx.coroutines.reactor.awaitSingle
@@ -38,7 +39,7 @@ fun Chat.isOwner(user: UserPrincipal?): Boolean {
 }
 
 suspend fun getUser(): UserPrincipal? {
-    val ctx = coroutineContext[ReactorContext.Key]?.context?.get<Mono<SecurityContext>>(SecurityContext::class.java)?.asFlow()?.single()
+    val ctx = coroutineContext[ReactorContext.Key]?.context?.get<Mono<SecurityContext>>(SecurityContext::class.java)?.asFlow()?.singleOrNull()
     val user = ctx?.authentication?.principal as UserPrincipal?;
     return user;
 }

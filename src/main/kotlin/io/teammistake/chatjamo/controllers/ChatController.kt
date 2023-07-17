@@ -5,8 +5,10 @@ import io.teammistake.chatjamo.dto.ChatCreationEvent
 import io.teammistake.chatjamo.dto.MessageEvent
 import io.teammistake.chatjamo.service.ChatService
 import io.teammistake.chatjamo.service.PromptingService
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.reactor.asFlux
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -31,13 +33,18 @@ class ChatController {
     @Autowired
     lateinit var promptingService: PromptingService;
 
-    @PostMapping("/create")
+    @PostMapping("/create",  produces = [MediaType.APPLICATION_NDJSON_VALUE, MediaType.TEXT_EVENT_STREAM_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
     suspend fun create(@RequestBody request: CreateChatRequest): Flux<MessageEvent> {
         val chat = chatService.createChat();
 
         return Flux.concat(
             Mono.just(MessageEvent(ChatCreationEvent(chat))),
-            promptingService.sendChatStreaming(chatId = chat.chatId, request.initialPrompt).asFlux()
+            flow {
+                promptingService.sendChatStreaming(chatId = chat.chatId, request.initialPrompt)
+                    .collect {
+                        emit(it)
+                    }
+            }.asFlux()
         )
     }
 

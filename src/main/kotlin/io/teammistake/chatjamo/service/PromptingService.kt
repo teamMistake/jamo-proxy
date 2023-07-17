@@ -26,6 +26,7 @@ class PromptingService {
     lateinit var suzumeService: SuzumeService;
 
     suspend fun requestSuzume(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest): Pair<APIResponseHeader, Flow<InferenceResponse>>  {
+        println("Requesting... $chatId $messageId $apiInferenceRequest")
         val coroutineScope = CoroutineScope(Dispatchers.IO)
         val resp = suzumeService.generateResponse(apiInferenceRequest)
             .shareIn(coroutineScope, SharingStarted.Lazily, 10)
@@ -33,7 +34,7 @@ class PromptingService {
         val coroutineScope2 = CoroutineScope(Dispatchers.IO)
         val header = resp.filter { it is APIResponseHeader }.map { it as APIResponseHeader }.first()
         val body = resp.filter { it is InferenceResponse }.map { it as InferenceResponse }.shareIn(coroutineScope2, SharingStarted.Lazily, 9999);
-
+        println("Received header $header")
         with(CoroutineScope(Dispatchers.IO)) {
             launch {
                 var state = true;
