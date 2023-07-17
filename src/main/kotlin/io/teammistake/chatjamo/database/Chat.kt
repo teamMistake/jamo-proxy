@@ -1,5 +1,6 @@
 package io.teammistake.chatjamo.database
 
+import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators.Exp
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.core.mapping.MongoId
 import java.time.Instant
@@ -30,10 +31,12 @@ class ChatMessageResponse(
     var hyperParameter: MutableMap<String, String>,
     var selected: Boolean,
     var feedback: Int?,
+    var error: String? = null,
     var type: ResponseType
 )
 
 open class Experiment()
+class Normal() : Experiment()
 enum class ResponseType {
     PLAIN, REGENERATED
 }
