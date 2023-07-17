@@ -1,6 +1,7 @@
 package io.teammistake.chatjamo.controllers
 
 import io.teammistake.chatjamo.database.Chat
+import io.teammistake.chatjamo.database.LightChat
 import io.teammistake.chatjamo.dto.APIError
 import io.teammistake.chatjamo.dto.ChatCreationEvent
 import io.teammistake.chatjamo.dto.JamoAPIError
@@ -46,6 +47,12 @@ class ChatController {
                     .onErrorResume { Mono.just(MessageEvent(JamoAPIError(it.message))) }
 
         );
+    }
+
+    @GetMapping("/chats")
+    @PreAuthorize("isAuthenticated()")
+    suspend fun getChats(): Flux<LightChat> {
+        return chatService.getChatsByMe()
     }
 
     data class ShareRequest(

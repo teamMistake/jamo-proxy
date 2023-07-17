@@ -10,3 +10,13 @@ data class JamoAPIError(
     @JsonInclude(JsonInclude.Include.NON_NULL)
     val data: Any? = null
 ): MessageEventData()
+
+@JsonNaming(value = PropertyNamingStrategies.SnakeCaseStrategy::class)
+data class ResponseGenerationError(
+    val chatId: String,
+    val messageId: String?,
+    val reqId: String?,
+    val error: String?,
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    val data: Any? = null
+): MessageEventData()

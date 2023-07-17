@@ -11,7 +11,8 @@ import io.teammistake.chatjamo.database.ChatMessage
     JsonSubTypes.Type(name="chat", value=ChatCreationEvent::class),
     JsonSubTypes.Type(name="message", value=MessageCreationEvent::class),
     JsonSubTypes.Type(name="lm_reqids", value=ResponseIdsEvent::class),
-    JsonSubTypes.Type(name="error", value=JamoAPIError::class)
+    JsonSubTypes.Type(name="error", value=JamoAPIError::class),
+    JsonSubTypes.Type(name="lm_error", value=ResponseGenerationError::class)
 )
 open class MessageEventData;
 

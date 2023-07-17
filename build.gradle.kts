@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "io.teammistake"
-version = "0.3.14-SNAPSHOT"
+version = "0.4.0-SNAPSHOT"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_17
@@ -24,6 +24,7 @@ docker {
 	name = "${project.name}:${project.version}"
 	files(tasks.bootJar.get().outputs)
 	tag("ghcr", "ghcr.io/teammistake/jamo-proxy:${project.version}")
+	tag("ghcrLatest", "ghcr.io/teammistake/jamo-proxy:latest")
 	setDockerfile( file("Dockerfile") )
 }
 

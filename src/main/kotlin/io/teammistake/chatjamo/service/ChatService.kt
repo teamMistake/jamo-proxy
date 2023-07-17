@@ -3,6 +3,7 @@ package io.teammistake.chatjamo.service
 import io.teammistake.chatjamo.security.UserPrincipal
 import io.teammistake.chatjamo.database.Chat
 import io.teammistake.chatjamo.database.ChatRepository
+import io.teammistake.chatjamo.database.LightChat
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
 import io.teammistake.chatjamo.exceptions.NotFoundException
 import kotlinx.coroutines.flow.single
@@ -12,9 +13,13 @@ import kotlinx.coroutines.reactor.ReactorContext
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.stereotype.Service
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.time.Instant
 import java.util.*
@@ -49,6 +54,13 @@ class ChatService {
     @Autowired lateinit var chatRepository: ChatRepository;
 
 
+    @Autowired lateinit var reactiveMongoTemplate: ReactiveMongoTemplate;
+
+    @PreAuthorize("isAuthenticated()")
+    suspend fun getChatsByMe(): Flux<LightChat> {
+        val query = Query(Criteria.where("userId").`is`(getUser()?.getUserId()))
+        return reactiveMongoTemplate.find(query, LightChat::class.java);
+    }
 
     suspend fun createChat(): Chat {
         val uid = getUser()?.getUserId();
