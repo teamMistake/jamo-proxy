@@ -11,6 +11,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.apache.logging.log4j.message.FlowMessage
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.util.*
@@ -322,11 +323,13 @@ class PromptingService {
     }
 
 
+    @PreAuthorize("isAuthenticated()")
     suspend fun rateResponse(chatId: String, messageId: String, reqId: String, stars: Int) {
         require(stars in intArrayOf(0,1,2,3,4,5)) {"Star must be in 0 through 5"}
 
         var chat = chatRepository.findById(chatId).awaitSingleOrNull() ?: throw NotFoundException("Chat $chatId not found.");
         if (!chat.isOwner(getUser())) throw PermissionDeniedException("Can not modify chat");
+
 
         val message = chat.messages
             .findLast { it.messageId == messageId } // ew linear search... But I don't think anyone is gonna have chat thing 1m message long. lol. hopefully.
