@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "io.teammistake"
-version = "0.6.0-SNAPSHOT"
+version = "0.6.1-SNAPSHOT"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_17

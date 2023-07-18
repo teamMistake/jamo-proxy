@@ -10,6 +10,7 @@ import io.teammistake.chatjamo.service.ChatService
 import io.teammistake.chatjamo.service.PromptingService
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.reactor.asFlux
+import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -51,7 +52,7 @@ class ChatController {
 
     @GetMapping("/chats")
     @PreAuthorize("isAuthenticated()")
-    suspend fun getChats(): Flux<LightChat> {
+    suspend fun getChats(): List<Chat> {
         return chatService.getChatsByMe()
     }
 

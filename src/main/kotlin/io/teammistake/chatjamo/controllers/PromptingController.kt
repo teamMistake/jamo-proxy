@@ -24,12 +24,13 @@ class PromptingController {
     lateinit var promptingService: PromptingService
 
     data class MessageCreationRequest(
-        val message: String
+        val message: String,
+        val chosen: String? = null
     )
     @PostMapping("/message")
     suspend fun createMessage(@PathVariable("chatId") chatId: String,
                               @RequestBody req: MessageCreationRequest): Flux<MessageEvent> {
-        return promptingService.sendChatStreaming(chatId = chatId, req.message).asFlux()
+        return promptingService.sendChatStreaming(chatId = chatId, req.message, req.chosen).asFlux()
                 .onErrorResume { Mono.just(MessageEvent(JamoAPIError(it.message))) }
     }
 

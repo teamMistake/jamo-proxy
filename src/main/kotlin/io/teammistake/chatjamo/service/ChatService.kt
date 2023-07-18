@@ -57,9 +57,12 @@ class ChatService {
     @Autowired lateinit var reactiveMongoTemplate: ReactiveMongoTemplate;
 
     @PreAuthorize("isAuthenticated()")
-    suspend fun getChatsByMe(): Flux<LightChat> {
+    suspend fun getChatsByMe(): List<Chat> {
         val query = Query(Criteria.where("userId").`is`(getUser()?.getUserId()))
-        return reactiveMongoTemplate.find(query, LightChat::class.java);
+        query.fields().include("chatId", "title", "userId", "creationTimestamp")
+        val queryFound = reactiveMongoTemplate.find(query, Chat::class.java)
+        println(queryFound)
+        return queryFound.collectList().awaitSingle();
     }
 
     suspend fun createChat(): Chat {

@@ -35,7 +35,7 @@ class ProxyAuthenticationManager(val userRepository: UserRepository): ReactiveAu
                 if (user.banned) throw PermissionDeniedException("Banned for reason ${user.bannedReason}")
             }
 
-            return@mono authentication;
+            authentication
         }
     }
 }

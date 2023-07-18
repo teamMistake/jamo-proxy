@@ -12,14 +12,16 @@ class Chat(
     var chatId: String,
     @Indexed
     var userId: String?,
-    var shared: Boolean,
-    var messages: MutableList<ChatMessage>,
+    var shared: Boolean = false,
+    var messages: MutableList<ChatMessage> = mutableListOf(),
     var title: String = "",
     var creationTimestamp: Instant,
     var generating: Boolean = false
 )
 
+@Document("chat")
 data class LightChat(
+    @MongoId
     val chatId: String,
     val title: String,
     val creationTimestamp: Instant

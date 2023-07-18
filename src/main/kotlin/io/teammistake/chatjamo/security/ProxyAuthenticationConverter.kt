@@ -16,7 +16,7 @@ class ProxyAuthenticationConverter: ServerAuthenticationConverter {
             val email = exchange.request.headers.getFirst("X-Forwarded-Email")
 
 
-            return@mono ProxyAuthenticationToken(user, username, email);
+            ProxyAuthenticationToken(user, username, email)
         }
     }
 }

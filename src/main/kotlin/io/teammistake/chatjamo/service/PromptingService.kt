@@ -186,7 +186,7 @@ class PromptingService {
                         contexts,
                         maxToken = 512,
                         stream = true,
-                        model = "prod_a",) // TODO: hardcoded
+                        model = "prod",) // TODO: hardcoded
                     val (header, resp) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN, uid);
 
                     return@async Pair(header, resp.map {
@@ -243,7 +243,7 @@ class PromptingService {
                 chat.messages.filter { it != message }.buildContext(),
                 maxToken = 512,
                 stream = true,
-                model = "prod_a", // TODO: hardcoded
+                model = "prod", // TODO: hardcoded
             )
 
             val request = CoroutineScope(coroutineContext + SupervisorJob()).
