@@ -1,6 +1,7 @@
 package io.teammistake.chatjamo.service
 
 import io.teammistake.chatjamo.database.UserRepository
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.withIndex
@@ -54,7 +55,7 @@ class LeaderboardService {
             .asFlow()
             .map {
                 map[it.userId]?.username = it.name
-            }
+            }.collect()
 
         return partialList;
     }

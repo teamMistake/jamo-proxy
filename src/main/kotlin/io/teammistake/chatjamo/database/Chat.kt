@@ -47,6 +47,7 @@ class ChatMessageResponse(
 
 open class Experiment()
 class Normal() : Experiment()
+class Multiple(val metadata: String = "I don't think you care about this experiment") : Experiment()
 enum class ResponseType {
     PLAIN, REGENERATED
 }

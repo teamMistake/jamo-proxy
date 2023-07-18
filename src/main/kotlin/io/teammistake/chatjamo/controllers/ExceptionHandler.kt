@@ -36,7 +36,7 @@ class ExceptionHandler {
 
     @ExceptionHandler(PermissionDeniedException::class, BadCredentialsException::class, AccessDeniedException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    fun onWeirdResponse(e: PermissionDeniedException): JamoAPIError {
+    fun onWeirdResponse(e: Exception): JamoAPIError {
         e.printStackTrace()
         return JamoAPIError(e.message)
     }

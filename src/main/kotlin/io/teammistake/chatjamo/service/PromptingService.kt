@@ -28,15 +28,18 @@ class PromptingService {
 
 
     class SuzumeDone(val cause: Exception?): SuzumeStreamingResponse();
+    class ErrInStream(val cause: Throwable): SuzumeStreamingResponse();
 
     suspend fun log(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest, resp: Flow<SuzumeStreamingResponse>, type: ResponseType, uid: String?) {
             var state = true;
             var last: String = "";
             val job = CoroutineScope(SupervisorJob()).async {
                 val header = resp
+                    .map { if (it is ErrInStream) throw it.cause else it }
                     .map { if(it is APIError) throw APIErrorException(it,chatId,messageId) else it  }
                     .takeWhile { it !is SuzumeDone }.first { it is APIResponseHeader } as APIResponseHeader
                 val body = resp
+                    .map { if (it is ErrInStream) throw it.cause else it }
                     .map { if(it is APIError) throw APIErrorException(it,chatId,messageId) else it  }
                     .takeWhile { it !is SuzumeDone }
                     .filterIsInstance(InferenceResponse::class)
@@ -123,6 +126,7 @@ class PromptingService {
         val coroutineScope = CoroutineScope(Dispatchers.IO)
 
         val resp = suzumeService.generateResponse(apiInferenceRequest)
+            .catch { cause -> emit(ErrInStream(cause)); emit(SuzumeDone(null)) }
                 .onCompletion { cause -> if (cause == null) emit(SuzumeDone(null))}
                 .shareIn(coroutineScope, SharingStarted.Lazily, 10)
 
@@ -132,11 +136,13 @@ class PromptingService {
 
 
         val header = resp
+            .map { if (it is ErrInStream) throw it.cause else it }
             .map { if(it is APIError) throw APIErrorException(it, chatId, messageId) else it  }
             .takeWhile { it !is SuzumeDone }
             .timeout(1.minutes)
             .first { it is APIResponseHeader } as APIResponseHeader
         val body = resp
+            .map { if (it is ErrInStream) throw it.cause else it }
             .map { if(it is APIError) throw APIErrorException(it, chatId, messageId) else it  }
             .takeWhile { it !is SuzumeDone }
             .filterIsInstance(InferenceResponse::class)
@@ -170,7 +176,10 @@ class PromptingService {
         try {
             chat = chosenReqId?.let { chooseResponse(chatId, chat.messages.last().messageId ?: "", it) } ?: chat
 
-            val newMessage = ChatMessage(UUID.randomUUID().toString(), prompt, resp = mutableListOf(), experiment = Normal())
+            val resps = 6 - Math.floor(Math.log(Math.random() * 63) / Math.log(2.0)).toInt()
+
+            val newMessage = ChatMessage(UUID.randomUUID().toString(), prompt, resp = mutableListOf(), experiment =
+            if(resps == 1) Normal() else Multiple())
 
             val contexts = chat.messages.buildContext()
             chat.messages.add(newMessage)
@@ -180,27 +189,30 @@ class PromptingService {
 
             run {
                 val apiCallScope = CoroutineScope(coroutineContext + SupervisorJob());
-                val job = apiCallScope.async {
-                    val req = APIInferenceRequest(
-                        prompt,
-                        contexts,
-                        maxToken = 512,
-                        stream = true,
-                        model = "prod",) // TODO: hardcoded
-                    val (header, resp) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN, uid);
+                for (i in 1..resps)
+                {
+                    val job = apiCallScope.async {
+                        val req = APIInferenceRequest(
+                            prompt,
+                            contexts,
+                            maxToken = 512,
+                            stream = true,
+                            model = "prod",) // TODO: hardcoded
+                        val (header, resp) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN, uid);
 
-                    return@async Pair(header, resp.map {
-                        MessageEvent(
-                            ResponseGenerationEvent(
-                                chatId,
-                                newMessage.messageId!!,
-                                header.reqId!!,
-                                it
+                        return@async Pair(header, resp.map {
+                            MessageEvent(
+                                ResponseGenerationEvent(
+                                    chatId,
+                                    newMessage.messageId!!,
+                                    header.reqId!!,
+                                    it
+                                )
                             )
-                        )
-                    })
+                        })
+                    }
+                    jobs.add(job)
                 }
-                jobs.add(job)
             }
 
             try {
