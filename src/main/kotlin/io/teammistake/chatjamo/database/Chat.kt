@@ -1,5 +1,6 @@
 package io.teammistake.chatjamo.database
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators.Exp
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
@@ -45,6 +46,7 @@ class ChatMessageResponse(
     var type: ResponseType
 )
 
+@JsonTypeInfo(use= JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
 open class Experiment()
 class Normal() : Experiment()
 class Multiple(val metadata: String = "I don't think you care about this experiment") : Experiment()
