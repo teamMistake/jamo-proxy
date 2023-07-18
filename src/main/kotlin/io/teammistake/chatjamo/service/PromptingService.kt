@@ -151,7 +151,7 @@ class PromptingService {
     }
 
     fun List<ChatMessage>.buildContext() = flatMap {
-            val botMessage = if (it.resp.size == 1) it.resp.last() else it.resp.find { it.selected } ?:  throw IllegalStateException("No response chosen")
+            val botMessage = if (it.resp.size == 1) it.resp.last() else it.resp.find { it.selected } ?:  throw IllegalArgumentException("No response chosen")
 
             listOf(
                 ContextPart(ContextType.HUMAN, it.req),
