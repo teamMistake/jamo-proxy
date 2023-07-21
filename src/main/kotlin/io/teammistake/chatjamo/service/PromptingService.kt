@@ -129,7 +129,7 @@ class PromptingService {
     lateinit var userService: UserService
 
     @OptIn(DelicateCoroutinesApi::class)
-    suspend fun requestSuzume(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest, responseType: ResponseType, uid: String?): Pair<APIResponseHeader, Flow<InferenceResponse>>  {
+    suspend fun requestSuzume(chatId: String, messageId: String, apiInferenceRequest: APIInferenceRequest, responseType: ResponseType, uid: String?): Triple<APIResponseHeader, Flow<InferenceResponse>, Job>  {
         val coroutineScope = CoroutineScope(Dispatchers.IO)
 
         val resp = suzumeService.generateResponse(apiInferenceRequest)
@@ -137,7 +137,7 @@ class PromptingService {
                 .onCompletion { cause -> if (cause == null) emit(SuzumeDone(null))}
                 .shareIn(coroutineScope, SharingStarted.Lazily, 10)
 
-        GlobalScope.launch {
+        val logJob = GlobalScope.launch {
            log(chatId, messageId, apiInferenceRequest, resp, responseType, uid)
         }
 
@@ -156,7 +156,7 @@ class PromptingService {
             .timeout(20.seconds)
             .catch { err -> if (err is TimeoutCancellationException) throw APIErrorException(APIError("timeout", header.reqId, apiInferenceRequest, "No response for 20 sec"), chatId, messageId, ) }
 
-        return Pair(header, body)
+        return Triple(header, body, logJob)
     }
 
     fun List<ChatMessage>.buildContext() = flatMap {
@@ -174,15 +174,16 @@ class PromptingService {
         if (!chat.isOwner(getUser())) throw PermissionDeniedException("Can not modify chat");
         if (chat.generating) throw PermissionDeniedException("Response is being generated")
         if (chat.messages.size > 5 && chat.userId == null) throw PermissionDeniedException("Can only send 5 messages to unbound chat")
-        chat.generating = true
-        chat = chatRepository.save(chat).awaitSingle()
 
-        val uid = getUser()?.getUserId()
-        if (uid != null) {
-            leaderboardService.addScore(uid, prompt.length.toDouble())
-            userService.incrementSentMessages(uid, prompt.length)
-        }
         try {
+            chat.generating = true
+            chat = chatRepository.save(chat).awaitSingle()
+
+            val uid = getUser()?.getUserId()
+            if (uid != null) {
+                leaderboardService.addScore(uid, prompt.length.toDouble())
+                userService.incrementSentMessages(uid, prompt.length)
+            }
             chat = chosenReqId?.let { chooseResponse(chatId, chat.messages.last().messageId ?: "", it) } ?: chat
 
             val (experiment, generatedRequests) = experimentService.generate(prompt, chat.messages.buildContext())
@@ -192,16 +193,16 @@ class PromptingService {
             chat.messages.add(newMessage)
             chat = chatRepository.save(chat).awaitSingle()
 
-            val jobs: MutableList<Deferred<Pair<APIResponseHeader, Flow<MessageEvent>>>> = mutableListOf();
+            val jobs: MutableList<Deferred<Triple<APIResponseHeader, Flow<MessageEvent>, Job>>> = mutableListOf();
 
             run {
                 val apiCallScope = CoroutineScope(coroutineContext + SupervisorJob());
                 for (req in generatedRequests)
                 {
                     val job = apiCallScope.async {
-                        val (header, resp) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN, uid);
+                        val (header, resp, job) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN, uid);
 
-                        return@async Pair(header, resp.map {
+                        return@async Triple(header, resp.map {
                             MessageEvent(
                                 ResponseGenerationEvent(
                                     chatId,
@@ -210,7 +211,7 @@ class PromptingService {
                                     it
                                 )
                             )
-                        })
+                        }, job)
                     }
                     jobs.add(job)
                 }
@@ -221,8 +222,29 @@ class PromptingService {
             } catch (_: Exception) {}
 
 
+
+
             val failed = jobs.filter { it.isCancelled }
             val successful = jobs.filter { it.isCompleted && !it.isCancelled }
+
+            GlobalScope.launch {
+                try {
+                    println("YAY")
+                    successful
+                        .map { it.await().third }
+                        .asFlow()
+                        .map { it.join() }
+                        .catch { it.printStackTrace() }
+                        .collect()
+                } finally {
+                    println("YAY2")
+                    val chat2 = chatRepository.findById(chat.chatId).awaitSingle();
+                    chat2.generating = false
+                    chatRepository.save(chat2).awaitSingle()
+
+                    println("SAVED")
+                }
+            }
 
             val flow = flowOf(MessageEvent(MessageCreationEvent(chatId, newMessage)),
                 MessageEvent(ResponseIdsEvent(successful.map { it.await().first }))
@@ -236,21 +258,25 @@ class PromptingService {
                 ))
             }
             return flow;
-        } finally {
-                chat.generating = false
-                chatRepository.save(chat).awaitSingle()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            chat.generating = false
+            chatRepository.save(chat).awaitSingle()
+            throw e;
         }
     }
     suspend fun regenerateChatStreaming(chatId: String): Flow<MessageEvent> {
         var chat = chatRepository.findById(chatId).awaitSingleOrNull() ?: throw NotFoundException("Chat $chatId not found.");
         if (!chat.isOwner(getUser())) throw PermissionDeniedException("Can not modify chat");
-        if (chat.generating) throw PermissionDeniedException("Response is being generated")
         if (chat.userId == null) throw PermissionDeniedException("Can not regenerate in unbound chat")
-        chat.generating = true
-        chat = chatRepository.save(chat).awaitSingle()
+        val message = chat.messages.last()
+        if (message.messageId == null) throw PermissionDeniedException("Can not generate response on message with null id")
+
+        if (chat.generating) throw PermissionDeniedException("Response is being generated")
         try {
-            val message = chat.messages.last()
-            if (message.messageId == null) throw PermissionDeniedException("Can not generate response on message with null id")
+            chat.generating = true
+            chat = chatRepository.save(chat).awaitSingle()
+
             val (exp, req) = experimentService.generateRegenerate(message.req, chat.messages.filter { it != message}.buildContext())
 
             val request = CoroutineScope(coroutineContext + SupervisorJob()).
@@ -258,7 +284,15 @@ class PromptingService {
 
 
             try {
-                val (header, resp) = request.await()
+                val (header, resp, job) = request.await()
+                GlobalScope.launch {
+                    try {
+                        job.join()
+                    } finally {
+                        chat.generating = false
+                        chatRepository.save(chat).awaitSingle()
+                    }
+                }
                 return flowOf(
                     MessageEvent(MessageCreationEvent(chatId, message)),
                     MessageEvent(ResponseIdsEvent(listOf(header)))
@@ -288,10 +322,11 @@ class PromptingService {
                     MessageEvent(ResponseGenerationError(chatId, message.messageId, null, e.message, null))
                 )
             }
-        } finally {
-            chat = chatRepository.findById(chat.chatId).awaitSingle()
+        } catch (e: Exception) {
+            e.printStackTrace()
             chat.generating = false
             chatRepository.save(chat).awaitSingle()
+            throw e;
         }
     }
 
