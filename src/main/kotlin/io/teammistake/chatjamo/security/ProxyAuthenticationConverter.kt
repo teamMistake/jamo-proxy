@@ -13,7 +13,9 @@ class ProxyAuthenticationConverter: ServerAuthenticationConverter {
         return mono {
             val user = exchange?.request?.headers?.getFirst("X-Forwarded-User") ?: return@mono null;
             val email = exchange.request.headers.getFirst("X-Forwarded-Email")
-            val username = exchange.request.headers.getFirst("X-Forwarded-Preferred-Username") ?:
+            val username =
+                exchange.request.headers.getFirst("X-Forwarded-Preferred-Username")
+                    ?.let { Charsets.ISO_8859_1.encode(it) }?.let { Charsets.UTF_8.decode(it).toString() } ?:
                         exchange.request.headers.getFirst("X-Forwarded-Email")?.split("@")?.get(0) ?: throw IllegalArgumentException("preferred username null");
 
             ProxyAuthenticationToken(user, username, email)

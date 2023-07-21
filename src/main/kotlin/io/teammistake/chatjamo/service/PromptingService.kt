@@ -5,6 +5,7 @@ import io.teammistake.chatjamo.dto.*
 import io.teammistake.chatjamo.exceptions.APIErrorException
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
 import io.teammistake.chatjamo.exceptions.NotFoundException
+import io.teammistake.chatjamo.experiments.ExperimentService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactor.awaitSingle
@@ -17,6 +18,7 @@ import java.time.Duration
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlin.math.exp
 import kotlin.time.Duration.Companion.minutes
 
 @Service
@@ -26,6 +28,9 @@ class PromptingService {
 
     @Autowired
     lateinit var suzumeService: SuzumeService;
+
+    @Autowired
+    lateinit var experimentService: ExperimentService;
 
 
     class SuzumeDone(val cause: Exception?): SuzumeStreamingResponse();
@@ -177,12 +182,10 @@ class PromptingService {
         try {
             chat = chosenReqId?.let { chooseResponse(chatId, chat.messages.last().messageId ?: "", it) } ?: chat
 
-            val resps = 6 - Math.floor(Math.log(Math.random() * 63) / Math.log(2.0)).toInt()
+            val (experiment, generatedRequests) = experimentService.generate(prompt, chat.messages.buildContext())
 
-            val newMessage = ChatMessage(UUID.randomUUID().toString(), prompt, resp = mutableListOf(), experiment =
-            if(resps == 1) Normal() else Multiple())
+            val newMessage = ChatMessage(UUID.randomUUID().toString(), prompt, resp = mutableListOf(), experiment = experiment)
 
-            val contexts = chat.messages.buildContext()
             chat.messages.add(newMessage)
             chat = chatRepository.save(chat).awaitSingle()
 
@@ -190,15 +193,9 @@ class PromptingService {
 
             run {
                 val apiCallScope = CoroutineScope(coroutineContext + SupervisorJob());
-                for (i in 1..resps)
+                for (req in generatedRequests)
                 {
                     val job = apiCallScope.async {
-                        val req = APIInferenceRequest(
-                            prompt,
-                            contexts,
-                            maxToken = 512,
-                            stream = true,
-                            model = "prod",) // TODO: hardcoded
                         val (header, resp) = requestSuzume(chatId, newMessage.messageId!!, req, ResponseType.PLAIN, uid);
 
                         return@async Pair(header, resp.map {
@@ -251,16 +248,10 @@ class PromptingService {
         try {
             val message = chat.messages.last()
             if (message.messageId == null) throw PermissionDeniedException("Can not generate response on message with null id")
-            val req = APIInferenceRequest(
-                message.req,
-                chat.messages.filter { it != message }.buildContext(),
-                maxToken = 512,
-                stream = true,
-                model = "prod", // TODO: hardcoded
-            )
+            val (exp, req) = experimentService.generateRegenerate(message.req, chat.messages.filter { it != message}.buildContext())
 
             val request = CoroutineScope(coroutineContext + SupervisorJob()).
-                async { requestSuzume(chatId, message.messageId !!, req, ResponseType.REGENERATED, getUser()?.getUserId()) }
+                async { requestSuzume(chatId, message.messageId !!, req[0], ResponseType.REGENERATED, getUser()?.getUserId()) }
 
 
             try {

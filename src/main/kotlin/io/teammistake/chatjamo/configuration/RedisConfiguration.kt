@@ -12,10 +12,10 @@ import org.springframework.data.redis.core.RedisTemplate
 @Configuration
 class RedisConfiguration {
 
-    @Value("#{environment.REDIS_HOST}")
+    @Value("\${redis.host}")
     lateinit var host: String;
 
-    @Value("#{environment.REDIS_PORT}")
+    @Value("\${redis.port}")
     lateinit var port: String;
     @Bean
     fun lettuceConnectionFactory(): LettuceConnectionFactory? {

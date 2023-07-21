@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "io.teammistake"
-version = "0.6.2-SNAPSHOT"
+version = "0.7.0-SNAPSHOT"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_17
@@ -45,6 +45,7 @@ dependencies {
 
 	implementation("io.springfox:springfox-boot-starter:3.0.0")
 	implementation("io.springfox:springfox-swagger-ui:3.0.0")
+
 
 }
 

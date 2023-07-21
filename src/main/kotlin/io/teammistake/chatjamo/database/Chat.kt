@@ -49,6 +49,7 @@ class ChatMessageResponse(
 @JsonTypeInfo(use= JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
 open class Experiment()
 class Normal() : Experiment()
+class SameModel() : Experiment()
 class Multiple(val metadata: String = "I don't think you care about this experiment") : Experiment()
 enum class ResponseType {
     PLAIN, REGENERATED

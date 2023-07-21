@@ -12,10 +12,10 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 @Configuration
 class MongoConfiguration: AbstractReactiveMongoConfiguration() {
 
-    @Value("#{environment.MONGO_URL}")
+    @Value("\${mongo.url}")
     lateinit var mongoUrl: String;
 
-    @Value("#{environment.MONGO_DATABASE_NAME}")
+    @Value("\${mongo.database}")
     lateinit var mongoDatabaseName: String;
 
     @Bean
