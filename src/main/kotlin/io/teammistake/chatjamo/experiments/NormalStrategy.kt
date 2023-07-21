@@ -38,7 +38,7 @@ class NormalStrategy(val experimentConfiguration: ExperimentConfiguration): Expe
 
     val random = Random()
     override fun generateModels(req: String, context: List<ContextPart>): Pair<Experiment, List<APIInferenceRequest>> {
-        val thing = models.ceilingEntry(random.nextInt(max))
+        val thing = models.ceilingEntry(random.nextInt(max)+1)
         val req = listOf(
             APIInferenceRequest(req, context, true, maxToken, thing.value.model, temperature, topK)
         )

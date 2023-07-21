@@ -48,7 +48,7 @@ class ExperimentService {
 
     suspend fun generate(req: String, context: List<ContextPart>): Pair<Experiment, List<APIInferenceRequest>> {
         if (getUser() != null) {
-            val strategy = experiments.ceilingEntry(random.nextInt(max)).value
+            val strategy = experiments.ceilingEntry(random.nextInt(max)+1).value
             return strategy.generateModels(req, context)
         } else {
             val strategy = default

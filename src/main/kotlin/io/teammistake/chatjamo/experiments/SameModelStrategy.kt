@@ -37,7 +37,7 @@ class SameModelStrategy(val experimentConfiguration: ExperimentConfiguration): E
 
     val random = Random()
     override fun generateModels(req: String, context: List<ContextPart>): Pair<Experiment, List<APIInferenceRequest>> {
-        val thing = models.ceilingEntry(random.nextInt(max))
+        val thing = models.ceilingEntry(random.nextInt(max)+1)
         val reqs = mutableListOf<APIInferenceRequest>()
 
         for (i in 1..cnt) {
