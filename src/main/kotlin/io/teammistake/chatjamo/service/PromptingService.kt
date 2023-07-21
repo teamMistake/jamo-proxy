@@ -20,6 +20,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.math.exp
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class PromptingService {
@@ -152,6 +153,8 @@ class PromptingService {
             .map { if(it is APIError) throw APIErrorException(it, chatId, messageId) else it  }
             .takeWhile { it !is SuzumeDone }
             .filterIsInstance(InferenceResponse::class)
+            .timeout(20.seconds)
+            .catch { err -> if (err is TimeoutCancellationException) throw APIErrorException(APIError("timeout", header.reqId, apiInferenceRequest, "No response for 20 sec"), chatId, messageId, ) }
 
         return Pair(header, body)
     }
