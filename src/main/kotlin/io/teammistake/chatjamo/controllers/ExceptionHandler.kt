@@ -43,9 +43,13 @@ class ExceptionHandler {
 
     @ExceptionHandler(NotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun onWeirdResponse(e: NotFoundException) {}
+    fun onWeirdResponse(e: NotFoundException): JamoAPIError {
+        return JamoAPIError(e.message)
+    }
 
     @ExceptionHandler(AuthenticationCredentialsNotFoundException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    fun onAuthNotFound(e: AuthenticationCredentialsNotFoundException) {}
+    fun onAuthNotFound(e: AuthenticationCredentialsNotFoundException): JamoAPIError {
+        return JamoAPIError("Unauthorized")
+    }
 }

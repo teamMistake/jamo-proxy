@@ -6,12 +6,16 @@ import io.teammistake.chatjamo.database.ChatRepository
 import io.teammistake.chatjamo.database.LightChat
 import io.teammistake.chatjamo.exceptions.PermissionDeniedException
 import io.teammistake.chatjamo.exceptions.NotFoundException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.ReactorContext
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -121,7 +125,7 @@ class ChatService {
     }
 
     suspend fun getChat(chatId: String): Chat {
-        val chat = chatRepository.findById(chatId).awaitSingleOrNull() ?: throw NotFoundException("Chat $chatId not found.");
+        val chat  = chatRepository.findById(chatId).awaitSingleOrNull()?: throw NotFoundException("Chat $chatId not found.");
         if (!chat.canView(getUser())) throw PermissionDeniedException("Can not view chat");
         return chat;
     }
