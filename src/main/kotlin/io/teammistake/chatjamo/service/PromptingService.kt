@@ -289,6 +289,7 @@ class PromptingService {
                     try {
                         job.join()
                     } finally {
+                        chat = chatRepository.findById(chat.chatId).awaitSingle();
                         chat.generating = false
                         chatRepository.save(chat).awaitSingle()
                     }
